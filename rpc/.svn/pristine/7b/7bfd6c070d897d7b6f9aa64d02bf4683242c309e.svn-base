@@ -1,0 +1,84 @@
+package edu.southeast.rpc.registry;
+
+import java.util.concurrent.CountDownLatch;
+
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.ZooDefs.Ids;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * 服务注册，zk在该框架中扮演了“服务注册表”的角色，用于注册所有服务器的地址 和端口，并对客户端提供注册服务，发现服务的功能
+ * @author ifcc
+ * @date 2017年10月16日
+ * @School SouthEast University
+ * @version 1.0
+ */
+public class ServiceRegistry {
+	private static final Logger LOGGER=LoggerFactory.getLogger(ServiceRegistry.class);
+	private CountDownLatch latch=new CountDownLatch(1);
+	private String registryAddress;
+	public ServiceRegistry(String registryAddress){
+		this.registryAddress=registryAddress;
+	}
+	
+	/**
+	 * 创建zookeeper连接及节点(对外)
+	 */
+	public void register(String data,String path){
+		if (data!=null) {
+			ZooKeeper zk=connectServer();
+			if (zk!=null) {
+				createNode(zk, data,path);
+			}
+		}
+	}
+	
+	/**
+	 * 创建zookeeper连接，监听
+	 * @return
+	 */
+	private ZooKeeper connectServer(){
+		ZooKeeper zk =null;
+		try{
+			zk=new ZooKeeper(registryAddress, Constant.ZK_SESSION_TIMEOUT, new Watcher(){
+
+				@Override
+				public void process(WatchedEvent event) {
+					if (event.getState()==Event.KeeperState.SyncConnected) {
+						latch.countDown();
+					}
+				}
+				
+			});
+			latch.await();
+		}catch (Exception e) {
+			LOGGER.error("",e);
+		}
+		return zk;
+	}
+	
+	/**
+	 * 创建节点
+	 * @param zk
+	 * @param data
+	 */
+	private void createNode(ZooKeeper zk,String data,String path){
+		try {
+			byte[] bytes = data.getBytes();
+			if (zk.exists(Constant.ZK_REGISTRY_PATH, null)==null) {
+				zk.create(Constant.ZK_REGISTRY_PATH, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			}
+			if (zk.exists(Constant.ZK_REGISTRY_PATH+"/"+path, null)==null) {
+				zk.create(Constant.ZK_REGISTRY_PATH+"/"+path, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			}
+			String result = zk.create(Constant.ZK_REGISTRY_PATH+"/"+path+Constant.ZK_DATA_PATH, bytes, Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
+			LOGGER.debug("create zookeeper node ({} ==> {})", result,data);
+		} catch (Exception e) {
+			LOGGER.error("",e);
+		}
+	}
+}

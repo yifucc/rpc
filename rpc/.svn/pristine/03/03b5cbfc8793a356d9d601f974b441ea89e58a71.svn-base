@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>  
+<xsd:schema xmlns="http://www.w3.org/2001/XMLSchema"  
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:tns="http://southeast.edu/schema/tags"  
+    targetNamespace="http://southeast.edu/schema/tags"  
+    elementFormDefault="qualified" attributeFormDefault="unqualified">  
+    <!--<xsd:import namespace="http://www.springframework.org/schema/beans" />-->
+    <xsd:element name="registry">  
+        <xsd:annotation>  
+            <xsd:documentation>registry info</xsd:documentation>  
+        </xsd:annotation>  
+        <xsd:complexType>  
+        	<xsd:attribute name="protocol" type="xsd:string" default="zookeeper"/>
+        	<xsd:attribute name="address" type="xsd:string" use="required"/>
+        	<xsd:attribute name="id" type="string"  fixed="serviceRegistry"/>
+        </xsd:complexType>  
+    </xsd:element>
+    <xsd:element name="discovery">  
+        <xsd:complexType>  
+        	<xsd:attribute name="protocol" type="xsd:string" default="zookeeper"/>
+        	<xsd:attribute name="address" type="xsd:string" use="required"/>
+        	<xsd:attribute name="id" type="string"  fixed="RpcProxy"/>
+        </xsd:complexType>  
+    </xsd:element>
+    <xsd:element name="protocol">
+    	<xsd:complexType>
+    		<xsd:attribute name="id" type="xsd:string" default="rpc"/>
+    		<xsd:attribute name="port" type="xsd:int" use="required"/>
+    	</xsd:complexType>
+    </xsd:element>
+    <xsd:element name="reference">
+    	<xsd:complexType>
+    		<xsd:attribute name="id" type="string"/>
+    		<xsd:attribute name="interface" type="string" use="required"/>
+    	</xsd:complexType>
+    </xsd:element>  
+</xsd:schema>
